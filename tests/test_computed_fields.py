@@ -151,6 +151,7 @@ def test_computed_fields_set():
     assert s.model_dump() == {'side': 10.0, 'area': 100.0, 'area_string': '100.0 SQUARE UNITS'}
     s.area = 64
     assert s.model_dump() == {'side': 8.0, 'area': 64.0, 'area_string': '64.0 SQUARE UNITS'}
+    assert Square.model_computed_fields['area'].wrapped_property is Square.area
 
 
 def test_computed_fields_del():
@@ -730,8 +731,8 @@ def test_multiple_references_to_schema(model_factory: Callable[[], Any]) -> None
     assert ta.json_schema(mode='serialization') == {
         '$defs': {'CompModel': {'properties': {}, 'title': 'CompModel', 'type': 'object'}},
         'properties': {
-            'comp_1': {'allOf': [{'$ref': '#/$defs/CompModel'}], 'readOnly': True},
-            'comp_2': {'allOf': [{'$ref': '#/$defs/CompModel'}], 'readOnly': True},
+            'comp_1': {'$ref': '#/$defs/CompModel', 'readOnly': True},
+            'comp_2': {'$ref': '#/$defs/CompModel', 'readOnly': True},
         },
         'required': ['comp_1', 'comp_2'],
         'title': 'Model',
