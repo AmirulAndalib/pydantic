@@ -631,7 +631,7 @@ The "Strict" column contains checkmarks for type conversions that are allowed wh
 
 API Documentation
 
-pydantic.dataclasses.dataclass
+@pydantic.dataclasses.dataclass
 
 If you don't want to use Pydantic's BaseModel you can instead get the same data validation on standard dataclasses.
 
@@ -707,7 +707,7 @@ You can use both the Pydantic's Field() and the stdlib's field() functions:
 import dataclasses
 from typing import Optional
 
-from pydantic import Field, TypeAdapter
+from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 
@@ -720,48 +720,21 @@ class User:
         default=None,
         metadata={'title': 'The age of the user', 'description': 'do not lie!'},
     )
-    height: Optional[int] = Field(None, title='The height in cm', ge=50, le=300)
+    height: Optional[int] = Field(
+        default=None, title='The height in cm', ge=50, le=300
+    )
 
 
-user = User(id='42')
-print(TypeAdapter(User).json_schema())
-"""
-{
-    'properties': {
-        'id': {'title': 'Id', 'type': 'integer'},
-        'name': {'default': 'John Doe', 'title': 'Name', 'type': 'string'},
-        'friends': {
-            'items': {'type': 'integer'},
-            'title': 'Friends',
-            'type': 'array',
-        },
-        'age': {
-            'anyOf': [{'type': 'integer'}, {'type': 'null'}],
-            'default': None,
-            'description': 'do not lie!',
-            'title': 'The age of the user',
-        },
-        'height': {
-            'anyOf': [
-                {'maximum': 300, 'minimum': 50, 'type': 'integer'},
-                {'type': 'null'},
-            ],
-            'default': None,
-            'title': 'The height in cm',
-        },
-    },
-    'required': ['id'],
-    'title': 'User',
-    'type': 'object',
-}
-"""
+user = User(id='42', height='250')
+print(user)
+#> User(id=42, name='John Doe', friends=[0], age=None, height=250)
 
 ```
 
 ```python
 import dataclasses
 
-from pydantic import Field, TypeAdapter
+from pydantic import Field
 from pydantic.dataclasses import dataclass
 
 
@@ -774,45 +747,18 @@ class User:
         default=None,
         metadata={'title': 'The age of the user', 'description': 'do not lie!'},
     )
-    height: int | None = Field(None, title='The height in cm', ge=50, le=300)
+    height: int | None = Field(
+        default=None, title='The height in cm', ge=50, le=300
+    )
 
 
-user = User(id='42')
-print(TypeAdapter(User).json_schema())
-"""
-{
-    'properties': {
-        'id': {'title': 'Id', 'type': 'integer'},
-        'name': {'default': 'John Doe', 'title': 'Name', 'type': 'string'},
-        'friends': {
-            'items': {'type': 'integer'},
-            'title': 'Friends',
-            'type': 'array',
-        },
-        'age': {
-            'anyOf': [{'type': 'integer'}, {'type': 'null'}],
-            'default': None,
-            'description': 'do not lie!',
-            'title': 'The age of the user',
-        },
-        'height': {
-            'anyOf': [
-                {'maximum': 300, 'minimum': 50, 'type': 'integer'},
-                {'type': 'null'},
-            ],
-            'default': None,
-            'title': 'The height in cm',
-        },
-    },
-    'required': ['id'],
-    'title': 'User',
-    'type': 'object',
-}
-"""
+user = User(id='42', height='250')
+print(user)
+#> User(id=42, name='John Doe', friends=[0], age=None, height=250)
 
 ```
 
-The Pydantic `@dataclass` decorator accepts the same arguments as the standard decorator, with the addition of a `config` parameter.
+The Pydantic @dataclass decorator accepts the same arguments as the standard decorator, with the addition of a `config` parameter.
 
 ## Dataclass config
 
@@ -849,7 +795,7 @@ While Pydantic dataclasses support the extra configuration value, some default b
 
 ## Rebuilding dataclass schema
 
-The rebuild_dataclass() can be used to rebuild the core schema of the dataclass. See the [rebuilding model schema](../models/#rebuilding-model-schema) section for more details.
+The rebuild_dataclass() function can be used to rebuild the core schema of the dataclass. See the [rebuilding model schema](../models/#rebuilding-model-schema) section for more details.
 
 ## Stdlib dataclasses and Pydantic dataclasses
 
@@ -891,6 +837,25 @@ except pydantic.ValidationError as e:
     z
       Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='pika', input_type=str]
     """
+
+```
+
+The decorator can also be applied directly on a stdlib dataclass, in which case a new subclass will be created:
+
+```python
+import dataclasses
+
+import pydantic
+
+
+@dataclasses.dataclass
+class A:
+    a: int
+
+
+PydanticA = pydantic.dataclasses.dataclass(A)
+print(PydanticA(a='1'))
+#> A(a=1)
 
 ```
 
@@ -1047,7 +1012,7 @@ print(repr(m))
 
 ### Checking if a dataclass is a Pydantic dataclass
 
-Pydantic dataclasses are still considered dataclasses, so using dataclasses.is_dataclass will return `True`. To check if a type is specifically a pydantic dataclass you can use the is_pydantic_dataclass function.
+Pydantic dataclasses are still considered dataclasses, so using dataclasses.is_dataclass() will return `True`. To check if a type is specifically a Pydantic dataclass you can use the is_pydantic_dataclass() function.
 
 ```python
 import dataclasses
@@ -14912,7 +14877,7 @@ A base class for creating Pydantic models.
 
 Attributes:
 
-| Name | Type | Description | | --- | --- | --- | | `__class_vars__` | `set[str]` | The names of the class variables defined on the model. | | `__private_attributes__` | `Dict[str, ModelPrivateAttr]` | Metadata about the private attributes of the model. | | `__signature__` | `Signature` | The synthesized __init__ Signature of the model. | | `__pydantic_complete__` | `bool` | Whether model building is completed, or if there are still undefined fields. | | `__pydantic_core_schema__` | `CoreSchema` | The core schema of the model. | | `__pydantic_custom_init__` | `bool` | Whether the model has a custom __init__ function. | | `__pydantic_decorators__` | `DecoratorInfos` | Metadata containing the decorators defined on the model. This replaces Model.__validators__ and Model.__root_validators__ from Pydantic V1. | | `__pydantic_generic_metadata__` | `PydanticGenericMetadata` | Metadata for generic models; contains data used for a similar purpose to args, origin, parameters in typing-module generics. May eventually be replaced by these. | | `__pydantic_parent_namespace__` | `Dict[str, Any] | None` | Parent namespace of the model, used for automatic rebuilding of models. | | `__pydantic_post_init__` | `None | Literal['model_post_init']` | The name of the post-init method for the model, if defined. | | `__pydantic_root_model__` | `bool` | Whether the model is a RootModel. | | `__pydantic_serializer__` | `SchemaSerializer` | The pydantic-core SchemaSerializer used to dump instances of the model. | | `__pydantic_validator__` | `SchemaValidator | PluggableSchemaValidator` | The pydantic-core SchemaValidator used to validate instances of the model. | | `__pydantic_fields__` | `Dict[str, FieldInfo]` | A dictionary of field names and their corresponding FieldInfo objects. | | `__pydantic_computed_fields__` | `Dict[str, ComputedFieldInfo]` | A dictionary of computed field names and their corresponding ComputedFieldInfo objects. | | `__pydantic_extra__` | `dict[str, Any] | None` | A dictionary containing extra values, if extra is set to 'allow'. | | `__pydantic_fields_set__` | `set[str]` | The names of fields explicitly set during instantiation. | | `__pydantic_private__` | `dict[str, Any] | None` | Values of private attributes set on the model instance. |
+| Name | Type | Description | | --- | --- | --- | | `__class_vars__` | `set[str]` | The names of the class variables defined on the model. | | `__private_attributes__` | `Dict[str, ModelPrivateAttr]` | Metadata about the private attributes of the model. | | `__signature__` | `Signature` | The synthesized __init__ Signature of the model. | | `__pydantic_complete__` | `bool` | Whether model building is completed, or if there are still undefined fields. | | `__pydantic_core_schema__` | `CoreSchema` | The core schema of the model. | | `__pydantic_custom_init__` | `bool` | Whether the model has a custom __init__ function. | | `__pydantic_decorators__` | `DecoratorInfos` | Metadata containing the decorators defined on the model. This replaces Model.__validators__ and Model.__root_validators__ from Pydantic V1. | | `__pydantic_generic_metadata__` | `PydanticGenericMetadata` | Metadata for generic models; contains data used for a similar purpose to args, origin, parameters in typing-module generics. May eventually be replaced by these. | | `__pydantic_parent_namespace__` | `Dict[str, Any] | None` | Parent namespace of the model, used for automatic rebuilding of models. | | `__pydantic_post_init__` | `None | Literal['model_post_init']` | The name of the post-init method for the model, if defined. | | `__pydantic_root_model__` | `bool` | Whether the model is a RootModel. | | `__pydantic_serializer__` | `SchemaSerializer` | The pydantic-core SchemaSerializer used to dump instances of the model. | | `__pydantic_validator__` | `SchemaValidator | PluggableSchemaValidator` | The pydantic-core SchemaValidator used to validate instances of the model. | | `__pydantic_fields__` | `Dict[str, FieldInfo]` | A dictionary of field names and their corresponding FieldInfo objects. | | `__pydantic_computed_fields__` | `Dict[str, ComputedFieldInfo]` | A dictionary of computed field names and their corresponding ComputedFieldInfo objects. | | `__pydantic_extra__` | `Dict[str, Any] | None` | A dictionary containing extra values, if extra is set to 'allow'. | | `__pydantic_fields_set__` | `set[str]` | The names of fields explicitly set during instantiation. | | `__pydantic_private__` | `Dict[str, Any] | None` | Values of private attributes set on the model instance. |
 
 Source code in `pydantic/main.py`
 
@@ -15010,13 +14975,13 @@ class BaseModel(metaclass=_model_construction.ModelMetaclass):
     __pydantic_computed_fields__: ClassVar[Dict[str, ComputedFieldInfo]]  # noqa: UP006
     """A dictionary of computed field names and their corresponding [`ComputedFieldInfo`][pydantic.fields.ComputedFieldInfo] objects."""
 
-    __pydantic_extra__: dict[str, Any] | None = _model_construction.NoInitField(init=False)
+    __pydantic_extra__: Dict[str, Any] | None = _model_construction.NoInitField(init=False)  # noqa: UP006
     """A dictionary containing extra values, if [`extra`][pydantic.config.ConfigDict.extra] is set to `'allow'`."""
 
     __pydantic_fields_set__: set[str] = _model_construction.NoInitField(init=False)
     """The names of fields explicitly set during instantiation."""
 
-    __pydantic_private__: dict[str, Any] | None = _model_construction.NoInitField(init=False)
+    __pydantic_private__: Dict[str, Any] | None = _model_construction.NoInitField(init=False)  # noqa: UP006
     """Values of private attributes set on the model instance."""
 
     if not TYPE_CHECKING:
@@ -19347,9 +19312,9 @@ def dataclass(
         # since dataclasses.dataclass will set this as the __doc__
         original_doc = cls.__doc__
 
-        if _pydantic_dataclasses.is_builtin_dataclass(cls):
-            # Don't preserve the docstring for vanilla dataclasses, as it may include the signature
-            # This matches v1 behavior, and there was an explicit test for it
+        if _pydantic_dataclasses.is_stdlib_dataclass(cls):
+            # Vanilla dataclasses include a default docstring (representing the class signature),
+            # which we don't want to preserve.
             original_doc = None
 
             # We don't want to add validation to the existing std lib dataclass, so we will subclass it
@@ -20426,7 +20391,7 @@ Field(
 Field(
     *,
     default_factory: (
-        Callable[[], _T" optional hover>_T] | Callable[[dict[str, Any]], _T]
+        Callable[[], _T] | Callable[[dict[str, Any]], _T]
     ),
     alias: str | None = _Unset,
     alias_priority: int | None = _Unset,
@@ -25972,7 +25937,7 @@ def dataclass_schema(self, schema: core_schema.DataclassSchema) -> JsonSchemaVal
     Returns:
         The generated JSON schema.
     """
-    from ._internal._dataclasses import is_builtin_dataclass
+    from ._internal._dataclasses import is_stdlib_dataclass
 
     cls = schema['cls']
     config: ConfigDict = getattr(cls, '__pydantic_config__', cast('ConfigDict', {}))
@@ -25983,7 +25948,7 @@ def dataclass_schema(self, schema: core_schema.DataclassSchema) -> JsonSchemaVal
     self._update_class_schema(json_schema, cls, config)
 
     # Dataclass-specific handling of description
-    if is_builtin_dataclass(cls):
+    if is_stdlib_dataclass(cls):
         # vanilla dataclass; don't use cls.__doc__ as it will contain the class signature by default
         description = None
     else:
